@@ -1,0 +1,8 @@
+{
+  "name": "gymbro-ai-mvp",
+  "version": "1.0.0",
+  "description": "Backend Serverless para GymBro AI",
+  "dependencies": {
+    "@google/generative-ai": "^0.11.4"
+  }
+}
