@@ -1,19 +1,25 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-
 exports.handler = async function(event, context) {
-    // Solo permitimos peticiones POST desde nuestro frontend
+    // Validar método POST
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: 'Method Not Allowed' };
     }
 
     try {
-        // Extraemos el mensaje del usuario enviado desde app.js
         const { prompt } = JSON.parse(event.body);
 
-        // Inicializamos el SDK con la Variable de Entorno segura de Netlify
+        // Importación dinámica para evitar errores de módulos en Node.js de Netlify
+        const { GoogleGenerativeAI } = await import('@google/generative-ai');
+
+        // Validar que la API Key exista en el servidor
+        if (!process.env.GEMINI_API_KEY) {
+            return {
+                statusCode: 500,
+                body: JSON.stringify({ error: 'Falta la variable de entorno GEMINI_API_KEY en Netlify' })
+            };
+        }
+
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-        // System Prompt Maestro (Instrucciones del sistema)
         const systemInstruction = `
             Actúa como "GymBro AI", un experto nutricionista y asistente de volumen muscular.
             CONTEXTO DEL USUARIO: 15 años, 1.81m, 54 kg (En volumen muscular masivo).
@@ -40,7 +46,6 @@ exports.handler = async function(event, context) {
             }
         `;
 
-        // Configuramos el modelo Flash con modo JSON estricto
         const model = genAI.getGenerativeModel({
             model: "gemini-1.5-flash",
             systemInstruction: systemInstruction,
@@ -49,22 +54,23 @@ exports.handler = async function(event, context) {
             }
         });
 
-        // Ejecutamos la petición a la IA
         const result = await model.generateContent(prompt);
         const responseText = result.response.text();
 
-        // Devolvemos el JSON de Gemini a nuestro frontend
         return {
             statusCode: 200,
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*' // Evita bloqueos de CORS
+            },
             body: responseText 
         };
 
     } catch (error) {
-        console.error("Error en la función serverless:", error);
+        console.error("Error detallado en el backend:", error);
         return { 
             statusCode: 500, 
-            body: JSON.stringify({ error: 'Fallo al conectar con el cerebro de GymBro AI' }) 
+            body: JSON.stringify({ error: error.message || 'Fallo en el servidor' }) 
         };
     }
 };
