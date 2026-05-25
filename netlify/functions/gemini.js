@@ -13,9 +13,9 @@ exports.handler = async function(event, context) {
 
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-        // Usamos el modelo PRO que es el más estable y universal
+        // Usamos el modelo 2.5 Flash que tienes disponible en tu consola
         const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-pro",
+            model: "gemini-2.5-flash", 
             generationConfig: {
                 responseMimeType: "application/json",
             }
