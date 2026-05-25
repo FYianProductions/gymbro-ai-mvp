@@ -264,6 +264,86 @@ input:focus, select:focus, textarea:focus {
     color: var(--text-main);
 }
 
+/* =========================================
+   BARRA FLOTANTE "PASTILLA" (FLOATING PILL)
+   ========================================= */
+.floating-pill {
+    position: fixed;
+    bottom: 25px; /* Flota sobre el borde inferior */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 380px; /* Ancho ajustado para parecer pastilla */
+    height: 70px;
+    
+    /* Efecto Liquid Glass */
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    
+    border-radius: 40px; /* Bordes totalmente redondeados */
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); /* Sombra elegante */
+    z-index: 100;
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 30%;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+/* Estilos de Íconos SVG */
+.tab-icon svg {
+    width: 24px;
+    height: 24px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform 0.2s ease;
+}
+
+/* Efecto al seleccionar pestaña */
+.tab-btn.active {
+    color: var(--accent);
+}
+
+.tab-btn.active .tab-icon svg {
+    transform: scale(1.15); /* Crece un poquito al activarse */
+}
+
+.tab-text {
+    font-size: 0.65rem;
+    font-weight: 600;
+}
+
+/* Ajustes de botones SVG en el Chat */
+.icon-btn svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.photo-btn svg {
+    stroke: var(--text-muted);
+}
+
 input:checked + .slider { background-color: var(--success); }
 input:checked + .slider:before { transform: translateX(18px); }
 

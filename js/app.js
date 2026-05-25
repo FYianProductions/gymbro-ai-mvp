@@ -1,6 +1,6 @@
 // 1. IMPORTACIONES DE FIREBASE (Desde el CDN oficial de Google)
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+// ... tu config ...
 
 // 2. PEGA AQUÍ TU CONFIGURACIÓN (La que copiaste en el Paso 2)
 const firebaseConfig = {
