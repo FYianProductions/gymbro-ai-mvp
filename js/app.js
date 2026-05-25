@@ -131,38 +131,94 @@ async function renderInventory() {
     });
 }
 
-// 6. AGREGAR ALIMENTO DIRECTO A LA NUBE
-document.getElementById('addFoodForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
+// SIMULACIÓN E INTEGRACIÓN CON IA Y FIREBASE
+document.getElementById('sendBtn').addEventListener('click', async () => {
+    const input = document.getElementById('chatInput');
+    const msg = input.value.trim();
+    if(!msg) return;
+
+    const chatLog = document.getElementById('chatLog');
     
-    const name = document.getElementById('foodName').value;
-    const qty = parseFloat(document.getElementById('foodQuantity').value);
-    const unit = document.getElementById('foodUnit').value;
-    const category = document.getElementById('foodCategory').value;
+    // 1. Mostrar mensaje del usuario sin romper el DOM
+    chatLog.insertAdjacentHTML('beforeend', `<div class="msg user">${msg}</div>`);
+    input.value = '';
 
-    let daysExp = 30; 
-    if(category === "Lácteos") daysExp = 7;
-    if(category === "Proteína Animal") daysExp = 5;
-    if(category === "Vegetales/Frutas") daysExp = 10;
-    if(category === "Despensa/Grasas") daysExp = 90;
+    // 2. Mostrar indicador de carga
+    const loadingId = 'loading_' + Date.now();
+    chatLog.insertAdjacentHTML('beforeend', `<div id="${loadingId}" class="msg bot">Analizando macros e inventario... 🏋️‍♂️</div>`);
+    chatLog.scrollTop = chatLog.scrollHeight;
 
-    const newItem = {
-        id: 'item_' + Date.now(), nombre: name, cantidad_inicial: qty, cantidad_actual: qty,
-        unidad: unit, porcentaje_restante: 100, categoria: category,
-        fecha_ingreso: new Date().toISOString(), dias_para_vencer: daysExp
-    };
+    try {
+        // 3. Petición a la IA (Netlify + Gemini)
+        const response = await fetch('/.netlify/functions/gemini', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: msg })
+        });
 
-    const userRef = doc(db, "users", MY_USER_ID);
-    const docSnap = await getDoc(userRef);
-    const currentInventory = docSnap.exists() ? (docSnap.data().fridgeInventory || []) : [];
-    
-    currentInventory.push(newItem);
-    
-    // Subir la actualización a la nube
-    await updateDoc(userRef, { fridgeInventory: currentInventory });
+        if (!response.ok) throw new Error('Error al conectar con la IA');
+        const data = await response.json(); 
+        
+        // Eliminar mensaje de carga de forma segura (Evita el error 'null')
+        const loadingEl = document.getElementById(loadingId);
+        if (loadingEl) loadingEl.remove();
 
-    document.getElementById('addFoodForm').reset();
-    renderInventory();
+        // 4. Actualizar Firebase de forma aislada
+        try {
+            const extractedMacros = data.macros_calculados || { calorias: 0, proteina_g: 0 };
+            const itemsToDeduct = data.ingredientes_a_descontar || [];
+
+            const userRef = doc(db, "users", MY_USER_ID);
+            const docSnap = await getDoc(userRef);
+            let inventory = docSnap.exists() ? (docSnap.data().fridgeInventory || []) : [];
+            let usedItemsFeedback = [];
+
+            inventory = inventory.map(item => {
+                let nameLower = item.nombre.toLowerCase();
+                const match = itemsToDeduct.find(i => nameLower.includes(i.palabra_clave_busqueda.toLowerCase()));
+
+                if(match) {
+                    const deductQty = match.cantidad_a_restar;
+                    item.cantidad_actual = Math.max(0, item.cantidad_actual - deductQty);
+                    item.porcentaje_restante = Math.round((item.cantidad_actual / item.cantidad_inicial) * 100);
+                    usedItemsFeedback.push(`${deductQty} de ${item.nombre}`);
+                }
+                return item;
+            });
+
+            // Guardar en FIREBASE y actualizar UI
+            consumed.cal += extractedMacros.calorias;
+            consumed.prot += extractedMacros.proteina_g;
+
+            await updateDoc(userRef, { 
+                fridgeInventory: inventory,
+                dailyLog: consumed
+            });
+            
+            updateCharts();
+            renderInventory();
+
+            // Mensaje de éxito de la IA
+            const deduccionesTexto = usedItemsFeedback.length > 0 
+                ? `<br><small>Restado: ${usedItemsFeedback.join(', ')}</small>` 
+                : ``;
+            
+            chatLog.insertAdjacentHTML('beforeend', `<div class="msg bot">${data.mensaje_usuario} ${deduccionesTexto}</div>`);
+
+        } catch (firebaseErr) {
+            console.error("Error al guardar en Firebase:", firebaseErr);
+            // Si Firebase falla, la IA de todos modos te responde
+            chatLog.insertAdjacentHTML('beforeend', `<div class="msg bot">${data.mensaje_usuario} <br><small style="color: #ff3b30;">(Nota: No se pudo guardar en tu base de datos por un bloqueo de red)</small></div>`);
+        }
+
+        chatLog.scrollTop = chatLog.scrollHeight;
+
+    } catch (error) {
+        const loadingEl = document.getElementById(loadingId);
+        if (loadingEl) loadingEl.remove();
+        chatLog.insertAdjacentHTML('beforeend', `<div class="msg bot" style="background: #ff3b30; color: white;">Fallo de conexión con GymBro AI.</div>`);
+        console.error("Error de la IA:", error);
+    }
 });
 
 // Inicializamos la app conectándose a Firebase
