@@ -26,13 +26,28 @@
 
         <main class="main-content">
             
-            <section id="tab-dashboard" class="tab-view active">
+            <section id="tab-home" class="tab-view active">
                 <div class="dashboard glass-panel">
                     <div class="chart-container">
                         <canvas id="caloriesChart"></canvas>
                     </div>
                     <div class="chart-container">
                         <canvas id="proteinChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chat-interface glass-panel">
+                    <div id="chatLog" class="chat-log">
+                        <div class="msg bot">¡Qué tal bro! ¿Qué comimos hoy o qué receta quieres armar?</div>
+                    </div>
+                    <div class="chat-input-area">
+                        <button class="icon-btn photo-btn" id="photoBtn" title="Subir Foto">
+                            <svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                        </button>
+                        <textarea id="chatInput" placeholder="Pídeme una receta o registra tu comida..." rows="1"></textarea>
+                        <button id="sendBtn" class="icon-btn send-btn">
+                            <svg viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                        </button>
                     </div>
                 </div>
             </section>
@@ -81,37 +96,26 @@
                 </div>
             </section>
 
-            <section id="tab-chat" class="tab-view">
-                <div class="chat-interface glass-panel">
-                    <div id="chatLog" class="chat-log">
-                        <div class="msg bot">¡Qué tal bro! ¿Qué comimos hoy o qué receta quieres que armemos con lo que hay en la nevera? 🍳</div>
-                    </div>
-                    <div class="chat-input-area">
-                        <button class="icon-btn photo-btn" id="photoBtn" title="Subir Foto">📷</button>
-                        <textarea id="chatInput" placeholder="Pídemi una receta o escribe tu comida..." rows="1"></textarea>
-                        <button id="sendBtn" class="icon-btn send-btn">⬆</button>
-                    </div>
-                </div>
-            </section>
-
         </main>
 
-        <nav class="ios-tab-bar">
-            <button class="tab-btn active" data-tab="tab-dashboard">
-                <span class="tab-icon">📊</span>
-                <span class="tab-text">Progreso</span>
+        <nav class="ios-tab-bar floating-pill">
+            <button class="tab-btn active" data-tab="tab-home">
+                <div class="tab-icon">
+                    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                </div>
+                <span class="tab-text">Inicio</span>
             </button>
             <button class="tab-btn" data-tab="tab-fridge">
-                <span class="tab-icon">🧊</span>
+                <div class="tab-icon">
+                    <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="4" y1="10" x2="20" y2="10"/><line x1="9" y1="14" x2="9" y2="18"/></svg>
+                </div>
                 <span class="tab-text">Nevera</span>
             </button>
             <button class="tab-btn" data-tab="tab-history">
-                <span class="tab-icon">🗓️</span>
+                <div class="tab-icon">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </div>
                 <span class="tab-text">Historial</span>
-            </button>
-            <button class="tab-btn" data-tab="tab-chat">
-                <span class="tab-icon">💬</span>
-                <span class="tab-text">GymBro AI</span>
             </button>
         </nav>
 

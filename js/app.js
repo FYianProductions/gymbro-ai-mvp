@@ -174,6 +174,26 @@ document.getElementById('restModeToggle').addEventListener('change', (e) => {
     updateCharts();
 });
 
+    // ==========================================
+// LÓGICA DE NAVEGACIÓN (TABS)
+// ==========================================
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        // 1. Quitar la clase 'active' de todos los botones y vistas
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
+        
+        // 2. Añadir 'active' al botón clickeado
+        btn.classList.add('active');
+        
+        // 3. Mostrar la vista correspondiente
+        const targetId = btn.getAttribute('data-tab');
+        document.getElementById(targetId).classList.add('active');
+        
+        // Scroll al inicio de la página para evitar cortes visuales
+        window.scrollTo(0, 0);
+    });
+});
 // CONEXIÓN REAL CON NETLIFY FUNCTIONS Y GEMINI AI
 document.getElementById('sendBtn').addEventListener('click', async () => {
     const input = document.getElementById('chatInput');
