@@ -16,7 +16,7 @@ function initData() {
     }
 }
 
-// Inicializar Gráficos
+// Inicializar Gráficos (Estilo Fitia / iOS Premium)
 function initCharts() {
     const ctxCal = document.getElementById('caloriesChart').getContext('2d');
     const ctxProt = document.getElementById('proteinChart').getContext('2d');
@@ -28,23 +28,39 @@ function initCharts() {
                 labels: ['Consumido', 'Restante'],
                 datasets: [{
                     data: [0, 100],
-                    backgroundColor: [color, '#e5e5ea'],
+                    backgroundColor: [color, '#f2f2f7'], // Fondo gris muy sutil
                     borderWidth: 0,
-                    cutout: '80%'
+                    borderRadius: 20, // <-- ESTA ES LA MAGIA: Bordes redondeados Fitia
+                    cutout: '85%'     // <-- Anillo más delgado y elegante
                 }]
             },
             options: {
                 responsive: true,
+                layout: {
+                    padding: 10
+                },
                 plugins: {
                     legend: { display: false },
-                    title: { display: true, text: label, position: 'bottom' }
+                    title: { 
+                        display: true, 
+                        text: label, 
+                        position: 'bottom',
+                        font: {
+                            family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+                            size: 14,
+                            weight: '600'
+                        },
+                        color: '#1c1c1e'
+                    },
+                    tooltip: { enabled: false } // Desactiva el hover molesto en móviles
                 }
             }
         });
     };
 
-    charts.cal = createDoughnut(ctxCal, 'Calorías', '#ff3b30');
-    charts.prot = createDoughnut(ctxProt, 'Proteína (g)', '#007aff');
+    // Colores más vibrantes
+    charts.cal = createDoughnut(ctxCal, 'Calorías', '#ff453a');
+    charts.prot = createDoughnut(ctxProt, 'Proteína (g)', '#0a84ff');
     updateCharts();
 }
 
