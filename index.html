@@ -2,20 +2,21 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GymBro AI - Tracker Inteligente</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GymBro AI - Premium</title>
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="app-container">
-        <header class="glass-panel">
+        
+        <header class="main-header glass-panel">
             <div class="user-info">
                 <h1>GymBro AI</h1>
-                <p>Volumen Activo | 54 kg</p>
+                <p>Progreso Diario | 54 kg</p>
             </div>
             <div class="toggle-container">
-                <span class="toggle-label">Día de Descanso</span>
+                <span class="toggle-label">Descanso</span>
                 <label class="ios-switch">
                     <input type="checkbox" id="restModeToggle">
                     <span class="slider"></span>
@@ -23,53 +24,97 @@
             </div>
         </header>
 
-        <section class="dashboard glass-panel">
-            <div class="chart-container">
-                <canvas id="caloriesChart"></canvas>
-            </div>
-            <div class="chart-container">
-                <canvas id="proteinChart"></canvas>
-            </div>
-        </section>
-
-        <section class="add-food glass-panel">
-            <h2>Ingresar Alimento</h2>
-            <form id="addFoodForm">
-                <input type="text" id="foodName" placeholder="Nombre (ej. Huevos, Avena)" required>
-                <div class="input-group">
-                    <input type="number" id="foodQuantity" placeholder="Cantidad Total" required>
-                    <select id="foodUnit">
-                        <option value="g">Gramos (g)</option>
-                        <option value="ml">Mililitros (ml)</option>
-                        <option value="unidades">Unidades</option>
-                    </select>
+        <main class="main-content">
+            
+            <section id="tab-dashboard" class="tab-view active">
+                <div class="dashboard glass-panel">
+                    <div class="chart-container">
+                        <canvas id="caloriesChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="proteinChart"></canvas>
+                    </div>
                 </div>
-                <select id="foodCategory">
-                    <option value="Lácteos">Lácteos (Vence rápido)</option>
-                    <option value="Proteína Animal">Proteína Animal (Vence medio)</option>
-                    <option value="Vegetales/Frutas">Vegetales/Frutas (Vence medio)</option>
-                    <option value="Despensa/Grasas">Despensa/Grasas (Larga duración)</option>
-                </select>
-                <button type="submit" class="btn-primary">Añadir a Nevera</button>
-            </form>
-        </section>
+            </section>
 
-        <section class="fridge-inventory glass-panel">
-            <h2>Mi Nevera Inteligente</h2>
-            <div id="inventoryList" class="inventory-list">
+            <section id="tab-fridge" class="tab-view">
+                <div class="add-food glass-panel">
+                    <h2>Ingresar Alimento</h2>
+                    <form id="addFoodForm">
+                        <input type="text" id="foodName" placeholder="Nombre (ej. Huevos, Avena)" required>
+                        <div class="input-group">
+                            <input type="number" id="foodQuantity" placeholder="Cantidad Total" required>
+                            <select id="foodUnit">
+                                <option value="g">Gramos (g)</option>
+                                <option value="ml">Mililitros (ml)</option>
+                                <option value="unidades">Unidades</option>
+                            </select>
+                        </div>
+                        <select id="foodCategory">
+                            <option value="Lácteos">Lácteos (Vence rápido)</option>
+                            <option value="Proteína Animal">Proteína Animal (Vence medio)</option>
+                            <option value="Vegetales/Frutas">Vegetales/Frutas (Vence medio)</option>
+                            <option value="Despensa/Grasas">Despensa/Grasas (Larga duración)</option>
+                        </select>
+                        <button type="submit" class="btn-primary">Añadir a Nevera</button>
+                    </form>
                 </div>
-        </section>
 
-        <section class="chat-interface glass-panel">
-            <div id="chatLog" class="chat-log">
-                <div class="msg bot">¡Qué tal bro! ¿Qué comimos hoy para seguir subiendo esos kilos?</div>
-            </div>
-            <div class="chat-input-area">
-                <button class="icon-btn photo-btn" title="Subir Foto">📷</button>
-                <textarea id="chatInput" placeholder="Ej: Me comí 2 tortillas con 2 huevos..." rows="1"></textarea>
-                <button id="sendBtn" class="icon-btn send-btn">⬆</button>
-            </div>
-        </section>
+                <div class="fridge-inventory glass-panel">
+                    <h2>Mi Nevera Inteligente</h2>
+                    <div id="inventoryList" class="inventory-list"></div>
+                </div>
+            </section>
+
+            <section id="tab-history" class="tab-view">
+                <div class="history-selector glass-panel">
+                    <h2>Registros Anteriores</h2>
+                    <div class="date-picker-container">
+                        <input type="date" id="historyDateSelector">
+                    </div>
+                </div>
+
+                <div class="meals-logger glass-panel">
+                    <h2 id="mealsListTitle">Comido Hoy</h2>
+                    <div id="dailyMealsList" class="meals-list">
+                        </div>
+                </div>
+            </section>
+
+            <section id="tab-chat" class="tab-view">
+                <div class="chat-interface glass-panel">
+                    <div id="chatLog" class="chat-log">
+                        <div class="msg bot">¡Qué tal bro! ¿Qué comimos hoy o qué receta quieres que armemos con lo que hay en la nevera? 🍳</div>
+                    </div>
+                    <div class="chat-input-area">
+                        <button class="icon-btn photo-btn" id="photoBtn" title="Subir Foto">📷</button>
+                        <textarea id="chatInput" placeholder="Pídemi una receta o escribe tu comida..." rows="1"></textarea>
+                        <button id="sendBtn" class="icon-btn send-btn">⬆</button>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <nav class="ios-tab-bar">
+            <button class="tab-btn active" data-tab="tab-dashboard">
+                <span class="tab-icon">📊</span>
+                <span class="tab-text">Progreso</span>
+            </button>
+            <button class="tab-btn" data-tab="tab-fridge">
+                <span class="tab-icon">🧊</span>
+                <span class="tab-text">Nevera</span>
+            </button>
+            <button class="tab-btn" data-tab="tab-history">
+                <span class="tab-icon">🗓️</span>
+                <span class="tab-text">Historial</span>
+            </button>
+            <button class="tab-btn" data-tab="tab-chat">
+                <span class="tab-icon">💬</span>
+                <span class="tab-text">GymBro AI</span>
+            </button>
+        </nav>
+
     </div>
     <script type="module" src="js/app.js"></script>
 </body>
