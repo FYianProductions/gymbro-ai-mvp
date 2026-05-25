@@ -1,26 +1,28 @@
 exports.handler = async function(event, context) {
-    // Validar método POST
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: 'Method Not Allowed' };
     }
 
     try {
         const { prompt } = JSON.parse(event.body);
-
-        // Importación dinámica para evitar errores de módulos en Node.js de Netlify
         const { GoogleGenerativeAI } = await import('@google/generative-ai');
 
-        // Validar que la API Key exista en el servidor
         if (!process.env.GEMINI_API_KEY) {
-            return {
-                statusCode: 500,
-                body: JSON.stringify({ error: 'Falta la variable de entorno GEMINI_API_KEY en Netlify' })
-            };
+            throw new Error('Falta la variable GEMINI_API_KEY en Netlify');
         }
 
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-        const systemInstruction = `
+        // Usamos el modelo PRO que es el más estable y universal
+        const model = genAI.getGenerativeModel({
+            model: "gemini-1.5-pro",
+            generationConfig: {
+                responseMimeType: "application/json",
+            }
+        });
+
+        // Unimos el System Prompt y el mensaje del usuario en un solo bloque sólido
+        const fullPrompt = `
             Actúa como "GymBro AI", un experto nutricionista y asistente de volumen muscular.
             CONTEXTO DEL USUARIO: 15 años, 1.81m, 54 kg (En volumen muscular masivo).
             
@@ -33,35 +35,29 @@ exports.handler = async function(event, context) {
             {
               "mensaje_usuario": "Texto corto felicitando al usuario por la comida.",
               "macros_calculados": {
-                "calorias": <number>,
-                "proteina_g": <number>
+                "calorias": 0,
+                "proteina_g": 0
               },
               "ingredientes_a_descontar": [
                 {
                   "palabra_clave_busqueda": "huevo", 
-                  "cantidad_a_restar": <number>,
+                  "cantidad_a_restar": 2,
                   "unidad_estimada": "unidades o g"
                 }
               ]
             }
+
+            MENSAJE DEL USUARIO: "${prompt}"
         `;
 
-        const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-flash-latest",
-            systemInstruction: systemInstruction,
-            generationConfig: {
-                responseMimeType: "application/json",
-            }
-        });
-
-        const result = await model.generateContent(prompt);
+        const result = await model.generateContent(fullPrompt);
         const responseText = result.response.text();
 
         return {
             statusCode: 200,
             headers: { 
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*' // Evita bloqueos de CORS
+                'Access-Control-Allow-Origin': '*'
             },
             body: responseText 
         };
