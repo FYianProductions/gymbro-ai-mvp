@@ -1,22 +1,58 @@
-// Constantes de Metas (Activo vs Descanso)
+// 1. IMPORTACIONES DE FIREBASE (Desde el CDN oficial de Google)
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// 2. PEGA AQUÍ TU CONFIGURACIÓN (La que copiaste en el Paso 2)
+const firebaseConfig = {
+  apiKey: "AIzaSyB8bAKYE727s1Pz3xy4UT_g7mGWFLZ7tBI",
+  authDomain: "gymbro-ai-52d2e.firebaseapp.com",
+  databaseURL: "https://gymbro-ai-52d2e-default-rtdb.firebaseio.com",
+  projectId: "gymbro-ai-52d2e",
+  storageBucket: "gymbro-ai-52d2e.firebasestorage.app",
+  messagingSenderId: "194968857917",
+  appId: "1:194968857917:web:a9c9f4875b7aab22e86954"
+};
+
+// 3. INICIALIZAR LA NUBE
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ID estático para conectar tus dispositivos sin Login
+const MY_USER_ID = "gymbro_admin_01"; 
+
+// Constantes de Metas
 const GOALS = {
     active: { cal: 3100, prot: 120 },
     rest: { cal: 2600, prot: 110 }
 };
 
-// Estado Inicial
 let currentMode = 'active'; 
 let consumed = { cal: 0, prot: 0 };
 let charts = {};
 
-// Inicialización de LocalStorage
-function initData() {
-    if (!localStorage.getItem('fridgeInventory')) {
-        localStorage.setItem('fridgeInventory', JSON.stringify([]));
+// 4. INICIALIZAR DATOS EN LA NUBE
+async function initData() {
+    const userRef = doc(db, "users", MY_USER_ID);
+    const docSnap = await getDoc(userRef);
+
+    if (!docSnap.exists()) {
+        // Si es la primera vez, crea la estructura en la nube
+        await setDoc(userRef, {
+            fridgeInventory: [],
+            dailyLog: { cal: 0, prot: 0 },
+            history: {} // Aquí guardaremos los días anteriores después
+        });
+    } else {
+        // Si ya existe, descargamos tus macros consumidos
+        const data = docSnap.data();
+        consumed = data.dailyLog || { cal: 0, prot: 0 };
     }
+    
+    initCharts();
+    renderInventory();
 }
 
-// Inicializar Gráficos (Estilo Fitia / iOS Premium)
+// Inicializar Gráficos (El código estilo Fitia que ya hicimos)
 function initCharts() {
     const ctxCal = document.getElementById('caloriesChart').getContext('2d');
     const ctxProt = document.getElementById('proteinChart').getContext('2d');
@@ -28,47 +64,28 @@ function initCharts() {
                 labels: ['Consumido', 'Restante'],
                 datasets: [{
                     data: [0, 100],
-                    backgroundColor: [color, '#f2f2f7'], // Fondo gris muy sutil
-                    borderWidth: 0,
-                    borderRadius: 20, // <-- ESTA ES LA MAGIA: Bordes redondeados Fitia
-                    cutout: '85%'     // <-- Anillo más delgado y elegante
+                    backgroundColor: [color, '#f2f2f7'],
+                    borderWidth: 0, borderRadius: 20, cutout: '85%'
                 }]
             },
             options: {
-                responsive: true,
-                layout: {
-                    padding: 10
-                },
+                responsive: true, layout: { padding: 10 },
                 plugins: {
                     legend: { display: false },
-                    title: { 
-                        display: true, 
-                        text: label, 
-                        position: 'bottom',
-                        font: {
-                            family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-                            size: 14,
-                            weight: '600'
-                        },
-                        color: '#1c1c1e'
-                    },
-                    tooltip: { enabled: false } // Desactiva el hover molesto en móviles
+                    title: { display: true, text: label, position: 'bottom', font: { size: 14, weight: '600' }, color: '#1c1c1e' },
+                    tooltip: { enabled: false }
                 }
             }
         });
     };
 
-    // Colores más vibrantes
     charts.cal = createDoughnut(ctxCal, 'Calorías', '#ff453a');
     charts.prot = createDoughnut(ctxProt, 'Proteína (g)', '#0a84ff');
     updateCharts();
 }
 
-// Actualizar Gráficos dinámicamente
 function updateCharts() {
     const target = GOALS[currentMode];
-    
-    // Calcular restantes, evitando números negativos visuales
     let remainingCal = target.cal - consumed.cal;
     let remainingProt = target.prot - consumed.prot;
     
@@ -81,52 +98,20 @@ function updateCharts() {
     charts.prot.update();
 }
 
-// Lógica de "Agregar Alimento"
-document.getElementById('addFoodForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    
-    const name = document.getElementById('foodName').value;
-    const qty = parseFloat(document.getElementById('foodQuantity').value);
-    const unit = document.getElementById('foodUnit').value;
-    const category = document.getElementById('foodCategory').value;
+// 5. RENDERIZAR INVENTARIO DESDE LA NUBE
+async function renderInventory() {
+    const userRef = doc(db, "users", MY_USER_ID);
+    const docSnap = await getDoc(userRef);
+    if (!docSnap.exists()) return;
 
-    let daysExp = 30; // Default
-    if(category === "Lácteos") daysExp = 7;
-    if(category === "Proteína Animal") daysExp = 5;
-    if(category === "Vegetales/Frutas") daysExp = 10;
-    if(category === "Despensa/Grasas") daysExp = 90;
-
-    const newItem = {
-        id: 'item_' + Date.now(),
-        nombre: name,
-        cantidad_inicial: qty,
-        cantidad_actual: qty,
-        unidad: unit,
-        porcentaje_restante: 100,
-        categoria: category,
-        fecha_ingreso: new Date().toISOString(),
-        dias_para_vencer: daysExp
-    };
-
-    const inventory = JSON.parse(localStorage.getItem('fridgeInventory'));
-    inventory.push(newItem);
-    localStorage.setItem('fridgeInventory', JSON.stringify(inventory));
-
-    document.getElementById('addFoodForm').reset();
-    renderInventory();
-});
-
-// Renderizar la Nevera Virtual
-function renderInventory() {
-    const inventory = JSON.parse(localStorage.getItem('fridgeInventory'));
+    const inventory = docSnap.data().fridgeInventory || [];
     const list = document.getElementById('inventoryList');
     list.innerHTML = '';
 
     inventory.forEach(item => {
-        // Lógica de color de barra según porcentaje
-        let colorClass = '#34c759'; // Verde
-        if(item.porcentaje_restante <= 20) colorClass = '#ff3b30'; // Rojo
-        else if(item.porcentaje_restante <= 50) colorClass = '#ffcc00'; // Amarillo
+        let colorClass = '#34c759'; 
+        if(item.porcentaje_restante <= 20) colorClass = '#ff3b30'; 
+        else if(item.porcentaje_restante <= 50) colorClass = '#ffcc00'; 
 
         const el = document.createElement('div');
         el.className = 'fridge-item';
@@ -145,6 +130,43 @@ function renderInventory() {
         list.appendChild(el);
     });
 }
+
+// 6. AGREGAR ALIMENTO DIRECTO A LA NUBE
+document.getElementById('addFoodForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const name = document.getElementById('foodName').value;
+    const qty = parseFloat(document.getElementById('foodQuantity').value);
+    const unit = document.getElementById('foodUnit').value;
+    const category = document.getElementById('foodCategory').value;
+
+    let daysExp = 30; 
+    if(category === "Lácteos") daysExp = 7;
+    if(category === "Proteína Animal") daysExp = 5;
+    if(category === "Vegetales/Frutas") daysExp = 10;
+    if(category === "Despensa/Grasas") daysExp = 90;
+
+    const newItem = {
+        id: 'item_' + Date.now(), nombre: name, cantidad_inicial: qty, cantidad_actual: qty,
+        unidad: unit, porcentaje_restante: 100, categoria: category,
+        fecha_ingreso: new Date().toISOString(), dias_para_vencer: daysExp
+    };
+
+    const userRef = doc(db, "users", MY_USER_ID);
+    const docSnap = await getDoc(userRef);
+    const currentInventory = docSnap.exists() ? (docSnap.data().fridgeInventory || []) : [];
+    
+    currentInventory.push(newItem);
+    
+    // Subir la actualización a la nube
+    await updateDoc(userRef, { fridgeInventory: currentInventory });
+
+    document.getElementById('addFoodForm').reset();
+    renderInventory();
+});
+
+// Inicializamos la app conectándose a Firebase
+initData();
 
 // Toggle Modo Descanso / Activo
 document.getElementById('restModeToggle').addEventListener('change', (e) => {
@@ -188,14 +210,14 @@ document.getElementById('sendBtn').addEventListener('click', async () => {
         const extractedMacros = data.macros_calculados;
         const itemsToDeduct = data.ingredientes_a_descontar || [];
 
-        // 6. Lógica de deducción de la nevera
-        let inventory = JSON.parse(localStorage.getItem('fridgeInventory'));
+        // 6. Lógica de deducción EN LA NUBE
+        const userRef = doc(db, "users", MY_USER_ID);
+        const docSnap = await getDoc(userRef);
+        let inventory = docSnap.exists() ? (docSnap.data().fridgeInventory || []) : [];
         let usedItemsFeedback = [];
 
         inventory = inventory.map(item => {
             let nameLower = item.nombre.toLowerCase();
-            
-            // Buscar si el item de la nevera coincide con las palabras clave de Gemini
             const match = itemsToDeduct.find(i => nameLower.includes(i.palabra_clave_busqueda.toLowerCase()));
 
             if(match) {
@@ -207,10 +229,14 @@ document.getElementById('sendBtn').addEventListener('click', async () => {
             return item;
         });
 
-        // 7. Guardar y actualizar UI
-        localStorage.setItem('fridgeInventory', JSON.stringify(inventory));
+        // 7. Guardar en FIREBASE y actualizar UI
         consumed.cal += extractedMacros.calorias;
         consumed.prot += extractedMacros.proteina_g;
+
+        await updateDoc(userRef, { 
+            fridgeInventory: inventory,
+            dailyLog: consumed
+        });
         
         updateCharts();
         renderInventory();
@@ -229,7 +255,6 @@ document.getElementById('sendBtn').addEventListener('click', async () => {
         console.error(error);
     }
 });
-
 // Ejecución Inicial
 initData();
 initCharts();
