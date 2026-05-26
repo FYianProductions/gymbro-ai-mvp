@@ -13,7 +13,7 @@
         <header class="main-header glass-panel">
             <div class="user-info">
                 <h1>GymBro AI</h1>
-                <p>Progreso Diario | <span id="currentWeightDisplay" class="weight-edit">54 kg</span></p>
+                <p>Progreso Diario | <span id="currentWeightDisplay" class="weight-edit">54 kg ✏️</span></p>
             </div>
             <div class="toggle-container">
                 <span class="toggle-label">Descanso</span>
@@ -25,15 +25,11 @@
         </header>
 
         <main class="main-content">
-            
+            <!-- PESTAÑA 1: INICIO -->
             <section id="tab-home" class="tab-view active">
                 <div class="dashboard glass-panel">
-                    <div class="chart-container">
-                        <canvas id="caloriesChart"></canvas>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="proteinChart"></canvas>
-                    </div>
+                    <div class="chart-container"><canvas id="caloriesChart"></canvas></div>
+                    <div class="chart-container"><canvas id="proteinChart"></canvas></div>
                 </div>
 
                 <div class="chat-interface glass-panel">
@@ -52,18 +48,36 @@
                 </div>
             </section>
 
+            <!-- PESTAÑA 2: NEVERA -->
             <section id="tab-fridge" class="tab-view">
+                <!-- Calculadora de Medidas Compacta -->
+                <details class="measure-guide glass-panel">
+                    <summary>📏 Calculadora de Equivalencias</summary>
+                    <div class="guide-content">
+                        <p><strong>Cuchara sopera:</strong> ~15g (Polvos/Salsas) o ~15ml (Líquidos)</p>
+                        <p><strong>Cucharadita (Té):</strong> ~5g o 5ml</p>
+                        <p><strong>Vaso estándar:</strong> ~250ml</p>
+                        <p><strong>Taza de arroz (cocido):</strong> ~150g</p>
+                        <p><strong>Pechuga pequeña:</strong> ~120g</p>
+                    </div>
+                </details>
+
                 <div class="add-food glass-panel">
                     <h2>Ingresar Alimento</h2>
                     <form id="addFoodForm">
-                        <input type="text" id="foodName" placeholder="Nombre (ej. Huevos, Avena)" required>
+                        <input type="text" id="foodName" placeholder="Nombre (ej. Huevos)" required>
                         <div class="input-group">
                             <input type="number" id="foodQuantity" placeholder="Cantidad Total" required>
                             <select id="foodUnit">
                                 <option value="g">Gramos (g)</option>
                                 <option value="ml">Mililitros (ml)</option>
-                                <option value="unidades">Unidades</option>
+                                <option value="un">Unidades</option>
                             </select>
+                        </div>
+                        <div class="input-group">
+                            <input type="number" id="foodProt" placeholder="Prot (g)" required>
+                            <input type="number" id="foodCarb" placeholder="Carb (g)" required>
+                            <input type="number" id="foodFat" placeholder="Grasa (g)" required>
                         </div>
                         <select id="foodCategory">
                             <option value="Lácteos">Lácteos (Vence rápido)</option>
@@ -81,44 +95,29 @@
                 </div>
             </section>
 
+            <!-- PESTAÑA 3: HISTORIAL -->
             <section id="tab-history" class="tab-view">
-                <div class="history-selector glass-panel">
-                    <h2>Registros Anteriores</h2>
-                    <div class="date-picker-container">
-                        <input type="date" id="historyDateSelector">
-                    </div>
-                </div>
-
                 <div class="meals-logger glass-panel">
                     <h2 id="mealsListTitle">Comido Hoy</h2>
-                    <div id="dailyMealsList" class="meals-list">
-                        </div>
+                    <div id="dailyMealsList" class="meals-list"></div>
                 </div>
             </section>
-
         </main>
 
         <nav class="ios-tab-bar floating-pill">
             <button class="tab-btn active" data-tab="tab-home">
-                <div class="tab-icon">
-                    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                </div>
+                <div class="tab-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
                 <span class="tab-text">Inicio</span>
             </button>
             <button class="tab-btn" data-tab="tab-fridge">
-                <div class="tab-icon">
-                    <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="4" y1="10" x2="20" y2="10"/><line x1="9" y1="14" x2="9" y2="18"/></svg>
-                </div>
+                <div class="tab-icon"><svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="4" y1="10" x2="20" y2="10"/><line x1="9" y1="14" x2="9" y2="18"/></svg></div>
                 <span class="tab-text">Nevera</span>
             </button>
             <button class="tab-btn" data-tab="tab-history">
-                <div class="tab-icon">
-                    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                </div>
+                <div class="tab-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
                 <span class="tab-text">Historial</span>
             </button>
         </nav>
-
     </div>
     <script type="module" src="js/app.js"></script>
 </body>

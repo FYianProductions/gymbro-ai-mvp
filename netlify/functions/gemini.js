@@ -2,7 +2,7 @@ exports.handler = async function(event, context) {
     if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
 
     try {
-        const { prompt, imageBase64, currentFridge } = JSON.parse(event.body);
+        const { prompt, imageBase64, currentFridge, history } = JSON.parse(event.body);
         const { GoogleGenerativeAI } = await import('@google/generative-ai');
 
         if (!process.env.GEMINI_API_KEY) throw new Error('Falta GEMINI_API_KEY');
@@ -14,39 +14,40 @@ exports.handler = async function(event, context) {
         });
 
         const fullPrompt = `
-            Actúa como "GymBro AI", nutricionista y chef experto.
-            USUARIO: 15 años, 1.81m, 54kg (Volumen muscular).
+            Actúa como "GymBro AI", nutricionista y chef.
+            USUARIO: 15 años, 1.81m, Volumen muscular.
             INVENTARIO ACTUAL: ${currentFridge}
             
-            MISIÓN: Analiza el texto o la imagen del usuario y determina qué quiere hacer.
+            HISTORIAL DE LA CONVERSACIÓN (Para que recuerdes el contexto):
+            ${history}
             
+            MISIÓN: Analiza el texto o la imagen y determina qué quiere hacer.
             RESPONDE EXCLUSIVAMENTE CON ESTE JSON VÁLIDO:
             {
-              "mensaje_usuario": "Texto respondiendo, dando la receta o confirmando el registro",
+              "mensaje_usuario": "Texto usando formato markdown con **negritas** para ser amigable",
               "accion": "registro_comida | agregar_nevera | dar_receta | charlar",
               "macros_calculados": { "calorias": 0, "proteina_g": 0 },
               "ingredientes_a_descontar": [ { "palabra_clave": "huevo", "cantidad": 2 } ],
-              "ingredientes_a_agregar": [ { "nombre": "Leche Entera", "cantidad": 1000, "unidad": "ml", "categoria": "Lácteos" } ]
+              "ingredientes_a_agregar": [ { "nombre": "Leche", "cantidad": 1000, "unidad": "ml", "categoria": "Lácteos", "macros_por_100g": {"prot":3, "carb":4, "gras":1} } ]
             }
 
-            MENSAJE: "${prompt}"
+            NUEVO MENSAJE: "${prompt}"
         `;
 
-        // Si hay imagen, la empaquetamos para Gemini Vision
         let result;
         if (imageBase64) {
-            const imagePart = {
-                inlineData: { data: imageBase64, mimeType: "image/jpeg" }
-            };
-            result = await model.generateContent([fullPrompt, imagePart]);
+            result = await model.generateContent([fullPrompt, { inlineData: { data: imageBase64, mimeType: "image/jpeg" } }]);
         } else {
             result = await model.generateContent(fullPrompt);
         }
 
+        // Limpiamos la respuesta en caso de que la IA añada texto extra
+        let cleanJson = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
+
         return {
             statusCode: 200,
             headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-            body: result.response.text()
+            body: cleanJson
         };
 
     } catch (error) {
