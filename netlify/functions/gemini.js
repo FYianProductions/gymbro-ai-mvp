@@ -1,72 +1,56 @@
 exports.handler = async function(event, context) {
-    if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, body: 'Method Not Allowed' };
-    }
+    if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
 
     try {
-        const { prompt } = JSON.parse(event.body);
+        const { prompt, imageBase64, currentFridge } = JSON.parse(event.body);
         const { GoogleGenerativeAI } = await import('@google/generative-ai');
 
-        if (!process.env.GEMINI_API_KEY) {
-            throw new Error('Falta la variable GEMINI_API_KEY en Netlify');
-        }
-
+        if (!process.env.GEMINI_API_KEY) throw new Error('Falta GEMINI_API_KEY');
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-        // Usamos el modelo 2.5 Flash que tienes disponible en tu consola
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.5-flash", 
-            generationConfig: {
-                responseMimeType: "application/json",
-            }
+            model: "gemini-2.5-flash",
+            generationConfig: { responseMimeType: "application/json" }
         });
 
-        // Unimos el System Prompt y el mensaje del usuario en un solo bloque sólido
         const fullPrompt = `
-            Actúa como "GymBro AI", un experto nutricionista y asistente de volumen muscular.
-            CONTEXTO DEL USUARIO: 15 años, 1.81m, 54 kg (En volumen muscular masivo).
+            Actúa como "GymBro AI", nutricionista y chef experto.
+            USUARIO: 15 años, 1.81m, 54kg (Volumen muscular).
+            INVENTARIO ACTUAL: ${currentFridge}
             
-            TU MISIÓN:
-            1. Calcular estimadamente calorías y macros del mensaje.
-            2. Analizar el texto para deducir qué alimentos se consumieron y cantidad.
-            3. RESPONDE EXCLUSIVAMENTE CON UN OBJETO JSON VÁLIDO. Cero texto adicional.
+            MISIÓN: Analiza el texto o la imagen del usuario y determina qué quiere hacer.
             
-            ESTRUCTURA EXACTA REQUERIDA:
+            RESPONDE EXCLUSIVAMENTE CON ESTE JSON VÁLIDO:
             {
-              "mensaje_usuario": "Texto corto felicitando al usuario por la comida.",
-              "macros_calculados": {
-                "calorias": 0,
-                "proteina_g": 0
-              },
-              "ingredientes_a_descontar": [
-                {
-                  "palabra_clave_busqueda": "huevo", 
-                  "cantidad_a_restar": 2,
-                  "unidad_estimada": "unidades o g"
-                }
-              ]
+              "mensaje_usuario": "Texto respondiendo, dando la receta o confirmando el registro",
+              "accion": "registro_comida | agregar_nevera | dar_receta | charlar",
+              "macros_calculados": { "calorias": 0, "proteina_g": 0 },
+              "ingredientes_a_descontar": [ { "palabra_clave": "huevo", "cantidad": 2 } ],
+              "ingredientes_a_agregar": [ { "nombre": "Leche Entera", "cantidad": 1000, "unidad": "ml", "categoria": "Lácteos" } ]
             }
 
-            MENSAJE DEL USUARIO: "${prompt}"
+            MENSAJE: "${prompt}"
         `;
 
-        const result = await model.generateContent(fullPrompt);
-        const responseText = result.response.text();
+        // Si hay imagen, la empaquetamos para Gemini Vision
+        let result;
+        if (imageBase64) {
+            const imagePart = {
+                inlineData: { data: imageBase64, mimeType: "image/jpeg" }
+            };
+            result = await model.generateContent([fullPrompt, imagePart]);
+        } else {
+            result = await model.generateContent(fullPrompt);
+        }
 
         return {
             statusCode: 200,
-            headers: { 
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
-            body: responseText 
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+            body: result.response.text()
         };
 
     } catch (error) {
-        console.error("Error detallado en el backend:", error);
-        return { 
-            statusCode: 500, 
-            body: JSON.stringify({ error: error.message || 'Fallo en el servidor' }) 
-        };
+        console.error(error);
+        return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
     }
 };
